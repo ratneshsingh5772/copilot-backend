@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.ai.chat.client.ChatClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,15 +25,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AdvisorServiceTest {
 
+    @Mock private GeminiRestClient geminiRestClient;
     @Mock private CustomerService customerService;
     @Mock private PlanService planService;
     @Mock private PromotionService promotionService;
     @Mock private CustomerUsageService customerUsageService;
     @Mock private CopilotInteractionService copilotInteractionService;
     @Mock private PlanTransactionService planTransactionService;
-    @Mock private ChatClient chatClient;
-    @Mock private ChatClient.ChatClientRequestSpec requestSpec;
-    @Mock private ChatClient.CallResponseSpec callResponseSpec;
 
     @InjectMocks
     private AdvisorService advisorService;
@@ -72,11 +69,9 @@ class AdvisorServiceTest {
         when(planService.buildPlanCatalogueText())
                 .thenReturn("Available Plans:\n- [ID:2] Premium 20GB | BASE_PLAN | $45.00/month | Data: 20 GB");
 
-        when(chatClient.prompt()).thenReturn(requestSpec);
-        when(requestSpec.system(anyString())).thenReturn(requestSpec);
-        when(requestSpec.user(anyString())).thenReturn(requestSpec);
-        when(requestSpec.call()).thenReturn(callResponseSpec);
-        when(callResponseSpec.content()).thenReturn("I recommend upgrading to Premium 20GB.");
+        // Mock GeminiRestClient instead of ChatClient
+        when(geminiRestClient.generate(anyString(), anyString()))
+                .thenReturn("I recommend upgrading to Premium 20GB.");
 
         CopilotInteraction stubInteraction = CopilotInteraction.builder()
                 .interactionId("test-id")

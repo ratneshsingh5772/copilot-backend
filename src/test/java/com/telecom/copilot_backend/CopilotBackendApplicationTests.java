@@ -1,7 +1,7 @@
 package com.telecom.copilot_backend;
 
+import com.telecom.copilot_backend.service.GeminiRestClient;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
@@ -22,19 +22,17 @@ import org.springframework.test.context.TestPropertySource;
         // Disable Vertex AI auto-configuration — replaced by mock ChatClient below
         "spring.ai.vertex.ai.gemini.project-id=test-project",
         "spring.ai.vertex.ai.gemini.location=us-central1",
-        "spring.ai.vertex.ai.gemini.chat.options.model=gemini-1.5-flash",
+        "spring.ai.vertex.ai.gemini.chat.options.model=gemini-2.0-flash-lite",
         // Exclude the real Vertex AI auto-config — no GCP credentials needed
-        "spring.autoconfigure.exclude=org.springframework.ai.autoconfigure.vertexai.gemini.VertexAiGeminiAutoConfiguration"
+        "spring.autoconfigure.exclude=org.springframework.ai.autoconfigure.vertexai.gemini.VertexAiGeminiAutoConfiguration",
+        "gemini.api.key=test-key",
+        "gemini.api.model=gemini-2.0-flash-lite"
 })
 class CopilotBackendApplicationTests {
 
-    /**
-     * @MockBean replaces both the AiConfig-produced ChatClient AND the
-     * VertexAiGeminiChatModel it depends on, so no real GCP client is
-     * created and no "credentials not found" shutdown warning is emitted.
-     */
+    /** MockBean prevents GeminiRestClient from making real HTTP calls during context load */
     @MockBean
-    ChatClient chatClient;
+    GeminiRestClient geminiRestClient;
 
     @Test
     void contextLoads() {

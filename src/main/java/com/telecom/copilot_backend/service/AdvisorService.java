@@ -7,7 +7,6 @@ import com.telecom.copilot_backend.entity.Customer;
 import com.telecom.copilot_backend.entity.CustomerUsage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +20,7 @@ import java.util.UUID;
 @Transactional
 public class AdvisorService {
 
-    private final ChatClient chatClient;
+    private final GeminiRestClient geminiRestClient;
     private final CustomerService customerService;
     private final PlanService planService;
     private final PromotionService promotionService;
@@ -62,11 +61,7 @@ public class AdvisorService {
 
         log.info("Calling Gemini for customer={}, interactionId={}", customer.getCustomerId(), interactionId);
 
-        String aiRecommendation = chatClient.prompt()
-                .system(systemPrompt)
-                .user(request.getPrompt())
-                .call()
-                .content();
+        String aiRecommendation = geminiRestClient.generate(systemPrompt, request.getPrompt());
 
         // --- Identify intent (keyword-based extraction from AI response) ---
         String intent = detectIntent(request.getPrompt());
