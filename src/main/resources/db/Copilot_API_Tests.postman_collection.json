@@ -1,0 +1,481 @@
+{
+  "info": {
+    "name": "Telecom Plan Advisor Copilot — Full API Test Suite",
+    "description": "Complete test collection for the Self-Service Telecom Plan Advisor Copilot backend.\nBase URL: http://localhost:8081\n\nTest Order:\n1. Plans Catalog\n2. Promotions\n3. Customers\n4. Customer Usage\n5. AI Advisor (core feature)\n6. Plan Transactions\n7. Copilot Interactions",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8081" },
+    { "key": "customerId", "value": "CUST001" }
+  ],
+  "item": [
+
+    {
+      "name": "1. Plans Catalog",
+      "item": [
+        {
+          "name": "GET All Plans",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/plans",
+            "description": "Returns all 12 plans (5 base + 4 travel + 3 boosters)"
+          }
+        },
+        {
+          "name": "GET Plans by Type — BASE_PLAN",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/plans/type/BASE_PLAN"
+          }
+        },
+        {
+          "name": "GET Plans by Type — TRAVEL_ADD_ON",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/plans/type/TRAVEL_ADD_ON"
+          }
+        },
+        {
+          "name": "GET Plans by Type — DATA_BOOSTER",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/plans/type/DATA_BOOSTER"
+          }
+        },
+        {
+          "name": "GET Single Plan (Basic 5GB = ID 2)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/plans/2"
+          }
+        },
+        {
+          "name": "POST Create New Plan",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/plans",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planName\": \"Business Pro 50GB\",\n  \"planType\": \"BASE_PLAN\",\n  \"monthlyCost\": 89.99,\n  \"dataLimitGb\": 50,\n  \"description\": \"Enterprise-grade plan with 50 GB data, priority network and 24/7 support.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PUT Update Plan",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/v1/plans/2",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planName\": \"Basic 5GB (Updated)\",\n  \"planType\": \"BASE_PLAN\",\n  \"monthlyCost\": 21.99,\n  \"dataLimitGb\": 5,\n  \"description\": \"Updated: 5 GB data, unlimited voice & SMS plus free streaming weekend.\"\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "2. Promotions",
+      "item": [
+        {
+          "name": "GET All Promotions",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/promotions"
+          }
+        },
+        {
+          "name": "GET Eligible Promos — tenure 36 months (CUST001)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/promotions/eligible/36",
+            "description": "Should return Welcome, 6-month, 1-year, 2-year and Seasonal (5 promos)"
+          }
+        },
+        {
+          "name": "GET Eligible Promos — tenure 0 months (new customer)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/promotions/eligible/0",
+            "description": "Should return only Welcome Offer and Seasonal Summer Sale (min_tenure=0)"
+          }
+        },
+        {
+          "name": "GET Single Promotion (ID 3)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/promotions/3"
+          }
+        },
+        {
+          "name": "POST Create Promotion",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/promotions",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"promoName\": \"Black Friday 35% Off\",\n  \"discountPercentage\": 35,\n  \"minTenureMonths\": 0,\n  \"isActive\": true\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "3. Customers",
+      "item": [
+        {
+          "name": "GET All Customers",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/customers"
+          }
+        },
+        {
+          "name": "GET Customer CUST001 (Alice — near data cap)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/customers/CUST001"
+          }
+        },
+        {
+          "name": "GET Customer CUST006 (Frank — 60m tenure, all promos eligible)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/customers/CUST006"
+          }
+        },
+        {
+          "name": "POST Create New Customer",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/customers",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST011\",\n  \"name\": \"Karen White\",\n  \"phoneNumber\": \"+1-555-0111\",\n  \"currentPlanId\": 1,\n  \"tenureMonths\": 0,\n  \"billingCycleDate\": \"2026-03-05\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PUT Update Customer Plan",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/v1/customers/CUST001",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST001\",\n  \"name\": \"Alice Johnson\",\n  \"phoneNumber\": \"+1-555-0101\",\n  \"currentPlanId\": 3,\n  \"tenureMonths\": 36,\n  \"billingCycleDate\": \"2026-03-15\"\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "4. Customer Usage",
+      "item": [
+        {
+          "name": "GET Current Usage — CUST001 (near cap 4.2/5GB)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/usage/CUST001/current"
+          }
+        },
+        {
+          "name": "GET Current Usage — CUST003 (heavy roamer)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/usage/CUST003/current"
+          }
+        },
+        {
+          "name": "GET All Usage — CUST001",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/usage/CUST001/all"
+          }
+        },
+        {
+          "name": "POST Upsert Usage Record",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/usage",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST001\",\n  \"billingPeriodStart\": \"2026-03-15\",\n  \"dataUsedGb\": 4.85,\n  \"roamingUsedMb\": 0.00\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "5. AI Advisor — CORE FEATURE",
+      "item": [
+        {
+          "name": "POST Advise — Data Booster (CUST001, near cap)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/advisor/recommend",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST001\",\n  \"prompt\": \"I have almost used all my data this month. What should I do?\"\n}"
+            },
+            "description": "Expected intent: DATA_BOOSTER. Gemini should recommend a booster or upgrade with pro-rated cost."
+          }
+        },
+        {
+          "name": "POST Advise — Travel Inquiry (CUST002)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/advisor/recommend",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST002\",\n  \"prompt\": \"I am travelling to the US next week for 3 weeks. What international plan should I get?\"\n}"
+            },
+            "description": "Expected intent: TRAVEL_INQUIRY. Should recommend US Roaming Pack or Global Roaming XL."
+          }
+        },
+        {
+          "name": "POST Advise — Plan Upgrade (CUST003)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/advisor/recommend",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST003\",\n  \"prompt\": \"I always run out of data and my roaming costs are very high. I need a better plan.\"\n}"
+            },
+            "description": "Expected intent: PLAN_UPGRADE. Customer on Premium 30GB with 18.4GB used and heavy roaming."
+          }
+        },
+        {
+          "name": "POST Advise — Billing Inquiry (CUST004)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/advisor/recommend",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST004\",\n  \"prompt\": \"Can you explain my bill this month? How much am I being charged?\"\n}"
+            },
+            "description": "Expected intent: BILLING_INQUIRY. Customer on Ultimate Unlimited."
+          }
+        },
+        {
+          "name": "POST Advise — Promo Inquiry (CUST006, 60m tenure)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/advisor/recommend",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST006\",\n  \"prompt\": \"I have been a customer for 5 years. Are there any special discounts or offers available for me?\"\n}"
+            },
+            "description": "Expected intent: PROMO_INQUIRY. Frank has 60m tenure — eligible for all 4 active promos including 25% 2-Year Champion Deal."
+          }
+        },
+        {
+          "name": "POST Advise — Plan Downgrade (CUST010)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/advisor/recommend",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST010\",\n  \"prompt\": \"I want to save money on my monthly bill. Can I switch to a cheaper plan?\"\n}"
+            },
+            "description": "Expected intent: PLAN_DOWNGRADE. James uses 38.9GB on Ultimate — AI should warn against downgrading."
+          }
+        },
+        {
+          "name": "POST Advise — New Customer (CUST005)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/advisor/recommend",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST005\",\n  \"prompt\": \"I just joined and I am not sure if I picked the right plan. What do you recommend?\"\n}"
+            },
+            "description": "Expected intent: GENERAL_INQUIRY. New customer on Starter 2GB with low usage."
+          }
+        },
+        {
+          "name": "POST Advise — Europe Travel (CUST008)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/advisor/recommend",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST008\",\n  \"prompt\": \"I travel to Europe and Asia frequently for business. I always run out of international data. What is the best roaming option?\"\n}"
+            },
+            "description": "Expected intent: TRAVEL_INQUIRY. Henry is a frequent traveller with 2048MB roaming usage."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "6. Plan Transactions",
+      "item": [
+        {
+          "name": "GET Transactions — CUST001",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/transactions/customer/CUST001"
+          }
+        },
+        {
+          "name": "GET Transactions — CUST003 (multiple upgrades)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/transactions/customer/CUST003"
+          }
+        },
+        {
+          "name": "POST Execute Plan Change — Upgrade CUST001 (Basic→Standard, no promo)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/transactions/execute",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST001\",\n  \"newPlanId\": 3,\n  \"promoId\": null\n}"
+            },
+            "description": "Upgrades CUST001 from Basic 5GB → Standard 15GB. Pro-rated cost auto-calculated."
+          }
+        },
+        {
+          "name": "POST Execute Plan Change — Upgrade CUST005 with Welcome Promo (10% off)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/transactions/execute",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST005\",\n  \"newPlanId\": 2,\n  \"promoId\": 1\n}"
+            },
+            "description": "Upgrades CUST005 Starter→Basic 5GB with 10% Welcome Offer discount applied."
+          }
+        },
+        {
+          "name": "POST Execute Plan Change — Add Travel Pack for CUST002",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/transactions/execute",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST002\",\n  \"newPlanId\": 6,\n  \"promoId\": null\n}"
+            },
+            "description": "Adds US Roaming Pack (plan ID 6) for CUST002 before their US trip."
+          }
+        },
+        {
+          "name": "POST Execute Plan Change — CUST006 upgrade with 2yr Champion Deal (25% off)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/transactions/execute",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST006\",\n  \"newPlanId\": 5,\n  \"promoId\": 4\n}"
+            },
+            "description": "Upgrades Frank (60m tenure) to Ultimate Unlimited with 25% loyalty discount."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "7. Copilot Interactions (Audit Log)",
+      "item": [
+        {
+          "name": "GET Interaction History — CUST001",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/interactions/customer/CUST001"
+          }
+        },
+        {
+          "name": "GET Interaction History — CUST010",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/interactions/customer/CUST010"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "8. Error / Edge Cases",
+      "item": [
+        {
+          "name": "GET Customer — Not Found (404)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/customers/CUST999"
+          }
+        },
+        {
+          "name": "POST Advisor — Missing Prompt (400 Validation)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/advisor/recommend",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST001\",\n  \"prompt\": \"\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Advisor — Missing Customer ID (400 Validation)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/advisor/recommend",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"\",\n  \"prompt\": \"What plan should I get?\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Execute — Plan Not Found (404)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/transactions/execute",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST001\",\n  \"newPlanId\": 9999,\n  \"promoId\": null\n}"
+            }
+          }
+        },
+        {
+          "name": "POST Create Customer — Duplicate ID (400)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/customers",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST001\",\n  \"name\": \"Duplicate Alice\",\n  \"phoneNumber\": \"+1-999-9999\",\n  \"currentPlanId\": 1,\n  \"tenureMonths\": 0,\n  \"billingCycleDate\": \"2026-03-05\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+
