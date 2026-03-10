@@ -45,27 +45,28 @@ async def get_recommendation(req: RecommendationRequest) -> RecommendationRespon
 
     ctx = req.customer_context
     try:
+        rec_plan_id = int(result["recommended_plan_id"])
         return RecommendationResponse(
-            recommended_plan_id=int(result["recommended_plan_id"]),
+            recommended_plan_id=rec_plan_id,
             recommended_plan_name=result["recommended_plan_name"],
             reasoning=result["reasoning"],
             current_plan_summary=PlanComparisonItem(
                 plan_id=ctx.current_plan.plan_id,
-                plan_name=result.get("current_plan_name", ctx.current_plan.plan_name),
-                monthly_cost=result.get("current_monthly_cost", ctx.current_plan.monthly_cost),
-                data_limit_gb=result.get("current_data_gb", ctx.current_plan.data_limit_gb),
+                plan_name=ctx.current_plan.plan_name,
+                monthly_cost=ctx.current_plan.monthly_cost,
+                data_limit_gb=ctx.current_plan.data_limit_gb,
                 key_benefits=[],
                 suitable_for=result.get("current_suitable_for", ""),
             ),
             recommended_plan_summary=PlanComparisonItem(
-                plan_id=int(result["recommended_plan_id"]),
+                plan_id=rec_plan_id,
                 plan_name=result["recommended_plan_name"],
-                monthly_cost=result.get("rec_monthly_cost", 0.0),
-                data_limit_gb=result.get("rec_data_gb", 0),
+                monthly_cost=float(result.get("rec_monthly_cost", 0.0)),
+                data_limit_gb=int(round(float(result.get("rec_data_gb", 0)))),
                 key_benefits=[],
                 suitable_for=result.get("rec_suitable_for", ""),
             ),
             personalized_message=result.get("personalized_message", ""),
         )
-    except KeyError as exc:
-        raise HTTPException(status_code=502, detail=f"Missing field in LLM response: {exc}")
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail=f"Missing or invalid field in LLM response: {exc}")
