@@ -22,7 +22,7 @@ public class AdvisorController {
     @PostMapping("/recommend")
     @Operation(
             summary = "Get AI plan recommendation",
-            description = "Sends the customer's profile and a natural language prompt to Gemini and returns a structured plan recommendation with pro-rated cost."
+            description = "Sends the customer's profile and a natural language prompt to the local Ollama LLM and returns a structured plan recommendation with pro-rated cost."
     )
     public ResponseEntity<ApiResponse<AdvisorResponse>> recommend(
             @Valid @RequestBody AdvisorRequest request) {

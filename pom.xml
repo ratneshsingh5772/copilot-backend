@@ -19,7 +19,6 @@
 
     <properties>
         <java.version>21</java.version>
-        <spring-ai.version>1.0.0-M4</spring-ai.version>
     </properties>
 
     <dependencies>
@@ -34,10 +33,7 @@
         </dependency>
 
         <!-- 2. AI / LLM Integration -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-vertex-ai-gemini-spring-boot-starter</artifactId>
-        </dependency>
+        <!-- Ollama is called directly via OllamaRestClient (plain REST) — no Spring AI starter needed -->
 
         <!-- 3. Data Persistence (MySQL) -->
         <dependency>
@@ -77,13 +73,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.springframework.ai</groupId>
-                <artifactId>spring-ai-bom</artifactId>
-                <version>${spring-ai.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
+            <!-- No additional BOMs required -->
         </dependencies>
     </dependencyManagement>
 
@@ -133,14 +123,7 @@
     </build>
 
     <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
+        <!-- No additional repositories required -->
     </repositories>
 
 </project>

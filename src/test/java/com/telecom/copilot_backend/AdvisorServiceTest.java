@@ -6,6 +6,7 @@ import com.telecom.copilot_backend.dto.PromotionDto;
 import com.telecom.copilot_backend.entity.CopilotInteraction;
 import com.telecom.copilot_backend.entity.Customer;
 import com.telecom.copilot_backend.entity.PlanCatalog;
+import com.telecom.copilot_backend.repository.PlanCatalogRepository;
 import com.telecom.copilot_backend.service.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,13 +26,14 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AdvisorServiceTest {
 
-    @Mock private GeminiRestClient geminiRestClient;
+    @Mock private OllamaRestClient ollamaRestClient;
     @Mock private CustomerService customerService;
     @Mock private PlanService planService;
     @Mock private PromotionService promotionService;
     @Mock private CustomerUsageService customerUsageService;
     @Mock private CopilotInteractionService copilotInteractionService;
     @Mock private PlanTransactionService planTransactionService;
+    @Mock private PlanCatalogRepository planCatalogRepository;
 
     @InjectMocks
     private AdvisorService advisorService;
@@ -66,18 +68,17 @@ class AdvisorServiceTest {
         ));
         when(planTransactionService.calculateProRatedAmount(eq(customer), eq(plan)))
                 .thenReturn(new BigDecimal("9.67"));
-        when(planService.buildPlanCatalogueText())
-                .thenReturn("Available Plans:\n- [ID:2] Premium 20GB | BASE_PLAN | $45.00/month | Data: 20 GB");
+        when(planCatalogRepository.findAll()).thenReturn(List.of(plan));
 
-        // Mock GeminiRestClient instead of ChatClient
-        when(geminiRestClient.generate(anyString(), anyString()))
-                .thenReturn("I recommend upgrading to Premium 20GB.");
+        // Single-arg generate() — matches new OllamaRestClient signature
+        when(ollamaRestClient.generate(anyString()))
+                .thenReturn("Recommended Plan: Premium 20GB (ID: 2) — $45.00/month\n\nI recommend upgrading to Premium 20GB.");
 
         CopilotInteraction stubInteraction = CopilotInteraction.builder()
                 .interactionId("test-id")
                 .customer(customer)
                 .identifiedIntent("PLAN_UPGRADE")
-                .llmSummary("I recommend upgrading to Premium 20GB.")
+                .llmSummary("Recommended Plan: Premium 20GB")
                 .createdAt(LocalDateTime.now())
                 .build();
         when(copilotInteractionService.logInteraction(anyString(), eq(customer),

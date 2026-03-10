@@ -1,0 +1,332 @@
+{
+  "info": {
+    "name": "Telecom Plan Advisor — LLM Service",
+    "description": "Complete test suite for the Python FastAPI LLM microservice.\nAll requests are pre-loaded with realistic dummy data.\n\nBase URL: http://localhost:8001\n\nEndpoints:\n  GET  /health\n  POST /api/v1/intent\n  POST /api/v1/recommendation\n  POST /api/v1/billing/prorate\n  POST /api/v1/summary",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8001",
+      "type": "string",
+      "description": "Base URL of the running FastAPI service. Change port if needed."
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "item": [
+        {
+          "name": "GET /health — Service liveness + Ollama connectivity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Verifies the FastAPI service is running and that the local Ollama server is reachable with the configured model loaded.\n\nExpected response:\n{\n  \"status\": \"ok\",\n  \"ollama_model\": \"llama3.2\",\n  \"ollama_reachable\": true\n}"
+          },
+          "response": [
+            {
+              "name": "200 OK — Ollama reachable",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"status\": \"ok\",\n  \"ollama_model\": \"llama3.2\",\n  \"ollama_reachable\": true\n}"
+            },
+            {
+              "name": "200 Degraded — Ollama not reachable",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"status\": \"degraded\",\n  \"ollama_model\": \"llama3.2\",\n  \"ollama_reachable\": false\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Intent Detection",
+      "item": [
+        {
+          "name": "POST /api/v1/intent — Travel + data shortage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/intent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "intent"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"CUST-1042\",\n  \"customer_query\": \"I travel to the US every month for work and always run out of data. What should I change?\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Classifies the customer's free-form message into a structured intent.\n\nExpected identified_intent: TRAVEL_INQUIRY or DATA_BOOSTER_REQUEST"
+          },
+          "response": [
+            {
+              "name": "200 OK — TRAVEL_INQUIRY",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"customer_id\": \"CUST-1042\",\n  \"identified_intent\": \"TRAVEL_INQUIRY\",\n  \"confidence\": \"HIGH\",\n  \"reasoning\": \"Customer explicitly mentions frequent US travel and data exhaustion, indicating a need for a travel-inclusive plan.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/intent — Plan upgrade query",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/intent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "intent"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"CUST-2087\",\n  \"customer_query\": \"I want to upgrade to a better plan with more data and unlimited calls.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expected identified_intent: PLAN_UPGRADE"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/intent — Billing query",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" } ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/intent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "intent"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"CUST-3311\",\n  \"customer_query\": \"Why is my bill so high this month? I was charged extra.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expected identified_intent: BILLING_QUERY"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/intent — Promotion inquiry",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/intent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "intent"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"CUST-4450\",\n  \"customer_query\": \"Do I have any loyalty discounts available? I've been a customer for 3 years.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Expected identified_intent: PROMOTION_INQUIRY"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Plan Recommendation",
+      "item": [
+        {
+          "name": "POST /api/v1/recommendation — Frequent US traveller",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/recommendation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "recommendation"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_context\": {\n    \"customer_id\": \"CUST-1042\",\n    \"name\": \"Priya Sharma\",\n    \"tenure_months\": 36,\n    \"current_plan\": {\n      \"plan_id\": 1,\n      \"plan_name\": \"Basic 5GB\",\n      \"plan_type\": \"BASE_PLAN\",\n      \"monthly_cost\": 19.99,\n      \"data_limit_gb\": 5,\n      \"description\": \"Entry-level domestic data plan with no roaming support\"\n    },\n    \"data_used_gb\": 4.7,\n    \"roaming_used_mb\": 950,\n    \"billing_cycle_date\": \"2026-03-01\"\n  },\n  \"customer_query\": \"I travel to the US every month for work and always run out of data. What plan should I switch to?\",\n  \"destination_country\": \"USA\",\n  \"available_plans\": [\n    {\n      \"plan_id\": 1,\n      \"plan_name\": \"Basic 5GB\",\n      \"plan_type\": \"BASE_PLAN\",\n      \"monthly_cost\": 19.99,\n      \"data_limit_gb\": 5,\n      \"description\": \"Entry-level domestic data plan with no roaming support\"\n    },\n    {\n      \"plan_id\": 2,\n      \"plan_name\": \"Standard 20GB\",\n      \"plan_type\": \"BASE_PLAN\",\n      \"monthly_cost\": 34.99,\n      \"data_limit_gb\": 20,\n      \"description\": \"Mid-tier domestic plan with 20GB data and basic international SMS\"\n    },\n    {\n      \"plan_id\": 3,\n      \"plan_name\": \"Premium Unlimited\",\n      \"plan_type\": \"BASE_PLAN\",\n      \"monthly_cost\": 59.99,\n      \"data_limit_gb\": 9999,\n      \"description\": \"Unlimited domestic data with free US and Canada roaming included\"\n    },\n    {\n      \"plan_id\": 4,\n      \"plan_name\": \"US Roaming Pack\",\n      \"plan_type\": \"TRAVEL_ADD_ON\",\n      \"monthly_cost\": 15.00,\n      \"data_limit_gb\": 10,\n      \"description\": \"10GB high-speed roaming data valid in the USA for 30 days\"\n    },\n    {\n      \"plan_id\": 5,\n      \"plan_name\": \"5GB Data Booster\",\n      \"plan_type\": \"DATA_BOOSTER\",\n      \"monthly_cost\": 8.00,\n      \"data_limit_gb\": 5,\n      \"description\": \"Instant 5GB top-up added to your current plan, valid for 30 days\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Customer: Priya Sharma\nTenure: 36 months (loyalty eligible)\nUsage: 4.7/5 GB used (94%) + 950 MB roaming\nQuery: Frequent US travel, runs out of data\n\nExpected recommendation: Premium Unlimited (plan_id: 3) — covers both unlimited data and US roaming in one plan."
+          },
+          "response": [
+            {
+              "name": "200 OK — Recommended Premium Unlimited",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"recommended_plan_id\": 3,\n  \"recommended_plan_name\": \"Premium Unlimited\",\n  \"reasoning\": \"The customer frequently travels to the US and is nearly at her data limit. Premium Unlimited covers both needs: unlimited domestic data and free US roaming.\",\n  \"current_plan_summary\": {\n    \"plan_id\": 1,\n    \"plan_name\": \"Basic 5GB\",\n    \"monthly_cost\": 19.99,\n    \"data_limit_gb\": 5,\n    \"key_benefits\": [],\n    \"suitable_for\": \"Light domestic usage only\"\n  },\n  \"recommended_plan_summary\": {\n    \"plan_id\": 3,\n    \"plan_name\": \"Premium Unlimited\",\n    \"monthly_cost\": 59.99,\n    \"data_limit_gb\": 9999,\n    \"key_benefits\": [],\n    \"suitable_for\": \"Frequent international travel + heavy data users\"\n  },\n  \"personalized_message\": \"Given your monthly US trips and near-full data usage, upgrading to Premium Unlimited will keep you connected without any roaming worries.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/recommendation — Light domestic user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/recommendation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "recommendation"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_context\": {\n    \"customer_id\": \"CUST-2087\",\n    \"name\": \"Arjun Mehta\",\n    \"tenure_months\": 8,\n    \"current_plan\": {\n      \"plan_id\": 3,\n      \"plan_name\": \"Premium Unlimited\",\n      \"plan_type\": \"BASE_PLAN\",\n      \"monthly_cost\": 59.99,\n      \"data_limit_gb\": 9999,\n      \"description\": \"Unlimited domestic data with free US and Canada roaming included\"\n    },\n    \"data_used_gb\": 2.1,\n    \"roaming_used_mb\": 0,\n    \"billing_cycle_date\": \"2026-03-01\"\n  },\n  \"customer_query\": \"I barely use data and never travel. Is there a cheaper plan for me?\",\n  \"destination_country\": null,\n  \"available_plans\": [\n    {\n      \"plan_id\": 1,\n      \"plan_name\": \"Basic 5GB\",\n      \"plan_type\": \"BASE_PLAN\",\n      \"monthly_cost\": 19.99,\n      \"data_limit_gb\": 5,\n      \"description\": \"Entry-level domestic data plan with no roaming support\"\n    },\n    {\n      \"plan_id\": 2,\n      \"plan_name\": \"Standard 20GB\",\n      \"plan_type\": \"BASE_PLAN\",\n      \"monthly_cost\": 34.99,\n      \"data_limit_gb\": 20,\n      \"description\": \"Mid-tier domestic plan with 20GB data and basic international SMS\"\n    },\n    {\n      \"plan_id\": 3,\n      \"plan_name\": \"Premium Unlimited\",\n      \"plan_type\": \"BASE_PLAN\",\n      \"monthly_cost\": 59.99,\n      \"data_limit_gb\": 9999,\n      \"description\": \"Unlimited domestic data with free US and Canada roaming included\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Customer: Arjun Mehta\nTenure: 8 months\nUsage: 2.1 GB only, zero roaming\nQuery: Wants to downgrade to save money\n\nExpected recommendation: Basic 5GB (plan_id: 1) — downgrade scenario."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Pro-Rated Billing",
+      "item": [
+        {
+          "name": "POST /api/v1/billing/prorate — Upgrade with 20% discount",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/billing/prorate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "billing", "prorate"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"CUST-1042\",\n  \"billing_cycle_date\": \"2026-03-01\",\n  \"change_date\": \"2026-03-10\",\n  \"current_plan\": {\n    \"plan_id\": 1,\n    \"plan_name\": \"Basic 5GB\",\n    \"plan_type\": \"BASE_PLAN\",\n    \"monthly_cost\": 19.99,\n    \"data_limit_gb\": 5,\n    \"description\": \"Entry-level domestic data plan\"\n  },\n  \"new_plan\": {\n    \"plan_id\": 3,\n    \"plan_name\": \"Premium Unlimited\",\n    \"plan_type\": \"BASE_PLAN\",\n    \"monthly_cost\": 59.99,\n    \"data_limit_gb\": 9999,\n    \"description\": \"Unlimited data with free US roaming\"\n  },\n  \"applied_discount_percentage\": 20\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Scenario: Customer switches from Basic 5GB ($19.99) to Premium Unlimited ($59.99) on day 10 of the billing cycle, with a 20% loyalty discount applied.\n\nManual calculation:\n  days_remaining = 30 - (10 Mar - 01 Mar) = 30 - 9 = 21 days\n  credit         = 19.99 × (21/30) = $13.99\n  charge         = 59.99 × (21/30) = $41.99\n  discount       = 41.99 × 20%     = $8.40\n  total          = 41.99 - 13.99 - 8.40 = $19.60"
+          },
+          "response": [
+            {
+              "name": "200 OK — Pro-rated amount calculated",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"customer_id\": \"CUST-1042\",\n  \"old_plan_name\": \"Basic 5GB\",\n  \"new_plan_name\": \"Premium Unlimited\",\n  \"days_remaining_in_cycle\": 21,\n  \"credit_for_unused_days\": 13.99,\n  \"charge_for_new_plan\": 41.99,\n  \"discount_applied\": 8.40,\n  \"prorated_billed_amount\": 19.60,\n  \"explanation\": \"Switching from Basic 5GB to Premium Unlimited with 21 days remaining. Credit $13.99, new charge $41.99, discount $8.40. Total billed: $19.60.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/billing/prorate — Upgrade no discount",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/billing/prorate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "billing", "prorate"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"CUST-2087\",\n  \"billing_cycle_date\": \"2026-03-01\",\n  \"change_date\": \"2026-03-15\",\n  \"current_plan\": {\n    \"plan_id\": 1,\n    \"plan_name\": \"Basic 5GB\",\n    \"plan_type\": \"BASE_PLAN\",\n    \"monthly_cost\": 19.99,\n    \"data_limit_gb\": 5,\n    \"description\": \"Entry-level domestic data plan\"\n  },\n  \"new_plan\": {\n    \"plan_id\": 2,\n    \"plan_name\": \"Standard 20GB\",\n    \"plan_type\": \"BASE_PLAN\",\n    \"monthly_cost\": 34.99,\n    \"data_limit_gb\": 20,\n    \"description\": \"Mid-tier plan with 20GB\"\n  },\n  \"applied_discount_percentage\": 0\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Scenario: Upgrade from Basic ($19.99) to Standard ($34.99) on day 15. No discount applied."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/billing/prorate — Add travel pack",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/billing/prorate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "billing", "prorate"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"CUST-3311\",\n  \"billing_cycle_date\": \"2026-03-01\",\n  \"change_date\": \"2026-03-05\",\n  \"current_plan\": {\n    \"plan_id\": 2,\n    \"plan_name\": \"Standard 20GB\",\n    \"plan_type\": \"BASE_PLAN\",\n    \"monthly_cost\": 34.99,\n    \"data_limit_gb\": 20,\n    \"description\": \"Mid-tier plan\"\n  },\n  \"new_plan\": {\n    \"plan_id\": 4,\n    \"plan_name\": \"US Roaming Pack\",\n    \"plan_type\": \"TRAVEL_ADD_ON\",\n    \"monthly_cost\": 15.00,\n    \"data_limit_gb\": 10,\n    \"description\": \"10GB US roaming for 30 days\"\n  },\n  \"applied_discount_percentage\": 0\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Scenario: Customer adds a US Roaming Pack ($15) on day 5 of the billing cycle. No discount."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Conversation Summary",
+      "item": [
+        {
+          "name": "POST /api/v1/summary — Plan upgrade completed",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "summary"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"CUST-1042\",\n  \"interaction_id\": \"INT-20260310-001\",\n  \"identified_intent\": \"TRAVEL_INQUIRY\",\n  \"conversation_history\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"I travel to the US every month for work and always run out of data. What should I switch to?\"\n    },\n    {\n      \"role\": \"assistant\",\n      \"content\": \"Based on your usage, I recommend switching to the Premium Unlimited plan at $59.99/month. It includes unlimited domestic data and free US roaming. Your pro-rated charge for switching today would be $19.60 after your 20% loyalty discount.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"That sounds good. Yes, please switch my plan.\"\n    },\n    {\n      \"role\": \"assistant\",\n      \"content\": \"Done! Your plan has been upgraded to Premium Unlimited, effective immediately. You will receive a confirmation SMS shortly.\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Generates a structured audit summary of a completed copilot conversation for storage in the Copilot_Interactions MySQL table.\n\nScenario: Customer asked about US travel plans, was shown a recommendation, confirmed the upgrade, and the change was executed.\n\nExpected outcome: 'Plan upgraded to Premium Unlimited'\nExpected follow_up_required: false"
+          },
+          "response": [
+            {
+              "name": "200 OK — Conversation summarised",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"customer_id\": \"CUST-1042\",\n  \"interaction_id\": \"INT-20260310-001\",\n  \"identified_intent\": \"TRAVEL_INQUIRY\",\n  \"llm_summary\": \"Customer Priya Sharma enquired about a plan better suited for frequent US travel. The copilot recommended Premium Unlimited ($59.99/month) which includes free US roaming. Customer confirmed the upgrade and the plan change was executed with a pro-rated charge of $19.60.\",\n  \"outcome\": \"Plan upgraded to Premium Unlimited\",\n  \"follow_up_required\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/summary — FAQ only, no action taken",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "summary"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"CUST-3311\",\n  \"interaction_id\": \"INT-20260310-002\",\n  \"identified_intent\": \"BILLING_QUERY\",\n  \"conversation_history\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Why was I charged $15 extra this month?\"\n    },\n    {\n      \"role\": \"assistant\",\n      \"content\": \"The $15 charge is for the US Roaming Pack you added on March 5th. It is a one-time 30-day roaming add-on.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Okay, that makes sense. Thanks.\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Scenario: Customer queried a billing charge. Copilot explained it. No plan change was made.\n\nExpected outcome: 'Billing query resolved'\nExpected follow_up_required: false"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/summary — Unresolved, needs follow-up",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "summary"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"CUST-4450\",\n  \"interaction_id\": \"INT-20260310-003\",\n  \"identified_intent\": \"PROMOTION_INQUIRY\",\n  \"conversation_history\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"I want to apply the loyalty discount but the system said I'm not eligible.\"\n    },\n    {\n      \"role\": \"assistant\",\n      \"content\": \"I can see your account shows 11 months tenure. The loyalty discount requires a minimum of 12 months. You will become eligible next month.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"But the SMS I received said I was eligible now. Can someone call me back?\"\n    },\n    {\n      \"role\": \"assistant\",\n      \"content\": \"I understand the confusion. I have flagged this for a human agent to review and call you back within 24 hours.\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Scenario: Customer received an incorrect SMS about loyalty eligibility. Issue escalated to human agent.\n\nExpected outcome: 'Escalated to human agent'\nExpected follow_up_required: true"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
