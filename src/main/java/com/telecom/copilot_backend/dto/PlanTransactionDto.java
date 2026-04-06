@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -24,5 +25,7 @@ public class PlanTransactionDto {
     private String promoAppliedName;
     private BigDecimal proratedBilledAmount;
     private LocalDateTime executedAt;
+    /** New billing cycle start date — reset to the transaction date when a plan changes. */
+    private LocalDate newBillingCycleDate;
 }
 

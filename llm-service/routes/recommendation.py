@@ -7,6 +7,7 @@ plan recommendation with a side-by-side comparison.
 import logging
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 
 from models.schemas import (
     RecommendationRequest,
@@ -22,6 +23,8 @@ router = APIRouter(prefix="/api/v1", tags=["Plan Recommendation"])
 
 @router.post(
     "/recommendation",
+    response_class=JSONResponse,
+    response_model=RecommendationResponse,
     summary="Generate personalised plan recommendation",
     description=(
         "Passes the customer's usage context, current plan, and a list of available "

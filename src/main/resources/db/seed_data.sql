@@ -60,17 +60,17 @@ INSERT INTO promotions (promo_name, discount_percentage, min_tenure_months, is_a
 -- =============================================================================
 -- 3. customers  (current_plan_id references plans_catalog IDs 1-5)
 -- =============================================================================
-INSERT INTO customers (customer_id, name, phone_number, current_plan_id, tenure_months, billing_cycle_date) VALUES
-('CUST001', 'Alice Johnson',    '+1-555-0101', 2, 36, '2026-03-15'),  -- Basic 5GB,        3yr tenure
-('CUST002', 'Bob Martinez',     '+1-555-0102', 3, 14, '2026-03-20'),  -- Standard 15GB,   14m tenure
-('CUST003', 'Carol Williams',   '+1-555-0103', 4, 28, '2026-03-10'),  -- Premium 30GB,    28m tenure
-('CUST004', 'David Brown',      '+1-555-0104', 5,  3, '2026-03-25'),  -- Ultimate Unlimited, 3m tenure
-('CUST005', 'Eva Garcia',       '+1-555-0105', 1,  0, '2026-03-01'),  -- Starter 2GB,     new customer
-('CUST006', 'Frank Lee',        '+1-555-0106', 3, 60, '2026-03-18'),  -- Standard 15GB,    5yr tenure
-('CUST007', 'Grace Kim',        '+1-555-0107', 2,  8, '2026-03-12'),  -- Basic 5GB,        8m tenure
-('CUST008', 'Henry Patel',      '+1-555-0108', 4, 24, '2026-03-08'),  -- Premium 30GB,    24m tenure
-('CUST009', 'Irene Nguyen',     '+1-555-0109', 1,  1, '2026-03-22'),  -- Starter 2GB,      1m tenure
-('CUST010', 'James O\'Connor',  '+1-555-0110', 5, 48, '2026-03-05');  -- Ultimate Unlimited, 4yr tenure
+INSERT INTO customers (customer_id, name, phone_number, email, password, current_plan_id, tenure_months, billing_cycle_date) VALUES
+('CUST001', 'Alice Johnson',    '+1-555-0101', 'alice.johnson@example.com', 'hashed_password_001', 2, 36, '2026-03-15'),  -- Basic 5GB,        3yr tenure
+('CUST002', 'Bob Martinez',     '+1-555-0102', 'bob.martinez@example.com', 'hashed_password_002', 3, 14, '2026-03-20'),  -- Standard 15GB,   14m tenure
+('CUST003', 'Carol Williams',   '+1-555-0103', 'carol.williams@example.com', 'hashed_password_003', 4, 28, '2026-03-10'),  -- Premium 30GB,    28m tenure
+('CUST004', 'David Brown',      '+1-555-0104', 'david.brown@example.com', 'hashed_password_004', 5,  3, '2026-03-25'),  -- Ultimate Unlimited, 3m tenure
+('CUST005', 'Eva Garcia',       '+1-555-0105', 'eva.garcia@example.com', 'hashed_password_005', 1,  0, '2026-03-01'),  -- Starter 2GB,     new customer
+('CUST006', 'Frank Lee',        '+1-555-0106', 'frank.lee@example.com', 'hashed_password_006', 3, 60, '2026-03-18'),  -- Standard 15GB,    5yr tenure
+('CUST007', 'Grace Kim',        '+1-555-0107', 'grace.kim@example.com', 'hashed_password_007', 2,  8, '2026-03-12'),  -- Basic 5GB,        8m tenure
+('CUST008', 'Henry Patel',      '+1-555-0108', 'henry.patel@example.com', 'hashed_password_008', 4, 24, '2026-03-08'),  -- Premium 30GB,    24m tenure
+('CUST009', 'Irene Nguyen',     '+1-555-0109', 'irene.nguyen@example.com', 'hashed_password_009', 1,  1, '2026-03-22'),  -- Starter 2GB,      1m tenure
+('CUST010', 'James O\'Connor',  '+1-555-0110', 'james.oconnor@example.com', 'hashed_password_010', 5, 48, '2026-03-05');  -- Ultimate Unlimited, 4yr tenure
 
 -- =============================================================================
 -- 4. customer_usage  (one record per customer = current billing period)

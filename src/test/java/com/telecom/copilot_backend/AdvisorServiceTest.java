@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 class AdvisorServiceTest {
 
     @Mock private OllamaRestClient ollamaRestClient;
-    @Mock private CustomerService customerService;
+    @Mock private ICustomerService customerService;
     @Mock private PlanService planService;
     @Mock private PromotionService promotionService;
     @Mock private CustomerUsageService customerUsageService;
@@ -36,7 +36,7 @@ class AdvisorServiceTest {
     @Mock private PlanCatalogRepository planCatalogRepository;
 
     @InjectMocks
-    private AdvisorService advisorService;
+    private IAdvisorService advisorService;
 
     @Test
     void advise_returnsRecommendation() {

@@ -1,7 +1,8 @@
 package com.telecom.copilot_backend.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.telecom.copilot_backend.exception.LlmServiceException;
+import com.telecom.copilot_backend.mapper.LlmResponseMapper;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -10,125 +11,119 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
+import java.nio.charset.StandardCharsets;
+
 /**
- * Delegates AI calls to the Python FastAPI LLM microservice (localhost:8001).
+ * Ollama-backed implementation of {@link ILlmClient}.
  *
- * The LLM service exposes:
- *   POST /api/v1/recommendation  — plan recommendation
- *   GET  /health                 — liveness + Ollama connectivity check
+ * <p><b>Single Responsibility:</b> HTTP transport only — POST the recommendation
+ * payload and GET the health status. All response parsing is delegated to
+ * {@link LlmResponseMapper}.
  *
- * The FastAPI service is responsible for talking to Ollama directly.
- * This client simply forwards the enriched payload and returns the recommendation text.
+ * <p><b>Dependency Inversion:</b> callers depend on {@link ILlmClient};
+ * this concrete class is wired by Spring and can be replaced by any other
+ * {@link ILlmClient} implementation (e.g. OpenAI, Vertex AI) without
+ * touching any caller.
  */
 @Slf4j
 @Service
-public class OllamaRestClient {
+public class OllamaRestClient implements ILlmClient {
 
-    private static final int CONNECT_TIMEOUT_MS   = 5_000;
-    private static final int GENERATE_TIMEOUT_MS  = 120_000;   // LLM can be slow
-    private static final int HEALTH_TIMEOUT_MS    = 3_000;
+    private static final int CONNECT_TIMEOUT_MS  = 5_000;
+    private static final int GENERATE_TIMEOUT_MS = 120_000;  // LLM can be slow
+    private static final int HEALTH_TIMEOUT_MS   = 3_000;
 
+    private static final String RECOMMENDATION_PATH = "/api/v1/recommendation";
+    private static final String HEALTH_PATH          = "/health";
+
+    @Getter
     @Value("${llm.service.base-url:http://localhost:8001}")
     private String llmServiceBaseUrl;
 
+    @Getter
     @Value("${ollama.model:llama3.2}")
     private String model;
 
     private final RestClient generateClient;
     private final RestClient healthClient;
-    private final ObjectMapper objectMapper;
-
-    public OllamaRestClient() {
-        this.generateClient = buildRestClient(CONNECT_TIMEOUT_MS, GENERATE_TIMEOUT_MS);
-        this.healthClient   = buildRestClient(CONNECT_TIMEOUT_MS, HEALTH_TIMEOUT_MS);
-        this.objectMapper   = new ObjectMapper();
-    }
-
-    // ─── Public API ─────────────────────────────────────────────────────────────
+    private final LlmResponseMapper responseMapper;
 
     /**
-     * Forwards a recommendation request to the FastAPI LLM service and returns
-     * the model's recommendation text.
+     * Constructor injection — {@code @Value} fields are injected by Spring after
+     * construction; RestClients use only compile-time constants so they are safe
+     * to build here.
      *
-     * @param recommendationPayload  JSON string matching FastAPI RecommendationRequest schema.
-     * @return the personalized_message + reasoning from the LLM response.
+     * @param responseMapper mapper that handles all LLM JSON → text conversion
      */
+    public OllamaRestClient(LlmResponseMapper responseMapper) {
+        this.responseMapper = responseMapper;
+        this.generateClient = buildRestClient(CONNECT_TIMEOUT_MS, GENERATE_TIMEOUT_MS);
+        this.healthClient   = buildRestClient(CONNECT_TIMEOUT_MS, HEALTH_TIMEOUT_MS);
+    }
+
+    // ─── ILlmClient ─────────────────────────────────────────────────────────────
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String generate(String recommendationPayload) {
-        String url = llmServiceBaseUrl + "/api/v1/recommendation";
+        String url = llmServiceBaseUrl + RECOMMENDATION_PATH;
         log.info("Calling LLM service: url={}", url);
 
         try {
-            String responseBody = generateClient.post()
+            // Read as byte[] — ByteArrayHttpMessageConverter supports ALL content types
+            // (including application/octet-stream which FastAPI may emit).
+            // StringHttpMessageConverter in Spring 6 RestClient can reject non-text types.
+            byte[] rawBytes = generateClient.post()
                     .uri(url)
                     .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON, MediaType.ALL)
                     .body(recommendationPayload)
                     .retrieve()
-                    .body(String.class);
+                    .body(byte[].class);
 
-            String text = parseRecommendationResponse(responseBody);
+            String responseBody = rawBytes == null ? "" : new String(rawBytes, StandardCharsets.UTF_8);
+            log.debug("Raw LLM response body: {}", responseBody);
+
+            String text = responseMapper.toAdvisorText(responseBody);
             log.info("LLM service responded: responseLength={}", text.length());
             return text;
 
         } catch (ResourceAccessException e) {
             log.error("Cannot reach LLM service at {}: {}", url, e.getMessage());
-            throw new RuntimeException(
+            throw new LlmServiceException(
                     "The LLM microservice is not reachable at " + llmServiceBaseUrl +
-                    ". Please start it with: cd llm-service && ./start.sh", e);
+                    ". Please start it with: cd llm-service && uvicorn main:app --port 8001", e);
+        } catch (LlmServiceException e) {
+            throw e;  // already wrapped — re-throw as-is
         } catch (Exception e) {
-            log.error("Error calling LLM service: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to get response from LLM service: " + e.getMessage(), e);
+            log.error("Unexpected error calling LLM service: {}", e.getMessage(), e);
+            throw new LlmServiceException(
+                    "Failed to get response from LLM service: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Health check — calls FastAPI /health which in turn checks Ollama connectivity.
+     * {@inheritDoc}
      */
+    @Override
     public boolean isReachable() {
         try {
-            String responseBody = healthClient.get()
-                    .uri(llmServiceBaseUrl + "/health")
+            byte[] rawBytes = healthClient.get()
+                    .uri(llmServiceBaseUrl + HEALTH_PATH)
+                    .accept(MediaType.APPLICATION_JSON, MediaType.ALL)
                     .retrieve()
-                    .body(String.class);
-            JsonNode root = objectMapper.readTree(responseBody);
-            return "ok".equals(root.path("status").asText());
+                    .body(byte[].class);
+            String responseBody = rawBytes == null ? "" : new String(rawBytes, StandardCharsets.UTF_8);
+            return responseMapper.isHealthy(responseBody);
         } catch (Exception e) {
             log.warn("LLM service health check failed: {}", e.getMessage());
             return false;
         }
     }
 
-    public String getModel() {
-        return model;
-    }
-
-    public String getLlmServiceBaseUrl() {
-        return llmServiceBaseUrl;
-    }
-
-    // ─── Private Helpers ────────────────────────────────────────────────────────
-
-    /**
-     * Parses the FastAPI RecommendationResponse and combines reasoning +
-     * personalized_message into a single advisor text block.
-     */
-    private String parseRecommendationResponse(String responseBody) {
-        try {
-            JsonNode root = objectMapper.readTree(responseBody);
-
-            String planName     = root.path("recommended_plan_name").asText("");
-            int    planId       = root.path("recommended_plan_id").asInt(0);
-            double cost         = root.path("recommended_plan_summary").path("monthly_cost").asDouble(0);
-            String reasoning    = root.path("reasoning").asText("");
-            String message      = root.path("personalized_message").asText("");
-
-            return String.format(
-                    "Recommended Plan: %s (ID: %d) — $%.2f/month%n%n%s%n%n%s",
-                    planName, planId, cost, reasoning, message
-            ).trim();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse LLM service response: " + responseBody, e);
-        }
-    }
+    // ─── Private helpers ─────────────────────────────────────────────────────────
 
     private static RestClient buildRestClient(int connectMs, int readMs) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();

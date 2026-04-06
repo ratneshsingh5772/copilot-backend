@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class CustomerUsageService {
 
     private final CustomerUsageRepository customerUsageRepository;
-    private final CustomerService customerService;
+    private final ICustomerService customerService;
 
     /**
      * Returns the most recent usage record for a customer (current billing period).

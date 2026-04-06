@@ -41,5 +41,7 @@ public class PlanCatalog {
 
     @Column(columnDefinition = "TEXT")
     private String description;
-}
 
+    @Column(name = "is_active")
+    private Boolean isActive;
+}

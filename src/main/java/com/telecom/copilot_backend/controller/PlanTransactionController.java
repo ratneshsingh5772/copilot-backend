@@ -3,7 +3,7 @@ package com.telecom.copilot_backend.controller;
 import com.telecom.copilot_backend.dto.ApiResponse;
 import com.telecom.copilot_backend.dto.PlanChangeRequest;
 import com.telecom.copilot_backend.dto.PlanTransactionDto;
-import com.telecom.copilot_backend.service.PlanTransactionService;
+import com.telecom.copilot_backend.service.IPlanTransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,7 +19,7 @@ import java.util.List;
 @Tag(name = "Plan Transactions", description = "Plan change execution and financial ledger")
 public class PlanTransactionController {
 
-    private final PlanTransactionService planTransactionService;
+    private final IPlanTransactionService planTransactionService;
 
     @PostMapping("/execute")
     @Operation(

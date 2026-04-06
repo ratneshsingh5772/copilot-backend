@@ -1,11 +1,19 @@
 package com.telecom.copilot_backend.controller;
 
 import com.telecom.copilot_backend.dto.ApiResponse;
+import com.telecom.copilot_backend.dto.PlanCatalogDto;
 import com.telecom.copilot_backend.dto.PlanDto;
+import com.telecom.copilot_backend.dto.PlanSearchCriteria;
+import com.telecom.copilot_backend.service.IPlanService;
 import com.telecom.copilot_backend.service.PlanService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,11 +27,61 @@ import java.util.List;
 public class PlanController {
 
     private final PlanService planService;
+    private final IPlanService planServiceImpl;
 
     @GetMapping
     @Operation(summary = "List all plans")
     public ResponseEntity<ApiResponse<List<PlanDto>>> getAllPlans() {
         return ResponseEntity.ok(ApiResponse.ok(planService.getAllPlans()));
+    }
+
+    @GetMapping("/search")
+    @Operation(
+        summary = "Search plans with pagination and filtering",
+        security = @SecurityRequirement(name = "bearerAuth"),
+        description = "Search for plans with optional filtering and pagination. " +
+                "Query parameters: planName, planType, minMonthlyCost, maxMonthlyCost, " +
+                "minDataLimitGb, maxDataLimitGb, isActive, page (0-indexed), size (default 10), sort (e.g., 'planName,asc')"
+    )
+    public ResponseEntity<ApiResponse<Page<PlanCatalogDto>>> searchPlans(
+            @RequestParam(required = false) String planName,
+            @RequestParam(required = false) String planType,
+            @RequestParam(required = false) Double minMonthlyCost,
+            @RequestParam(required = false) Double maxMonthlyCost,
+            @RequestParam(required = false) Integer minDataLimitGb,
+            @RequestParam(required = false) Integer maxDataLimitGb,
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "planName,asc") String[] sort) {
+
+        // Build sort order
+        Sort.Order[] orders = new Sort.Order[sort.length];
+        for (int i = 0; i < sort.length; i++) {
+            String[] parts = sort[i].split(",");
+            String field = parts[0].trim();
+            String direction = parts.length > 1 ? parts[1].trim() : "asc";
+            orders[i] = "desc".equalsIgnoreCase(direction)
+                ? Sort.Order.desc(field)
+                : Sort.Order.asc(field);
+        }
+
+        // Build pagination
+        Pageable pageable = PageRequest.of(page, size, Sort.by(orders));
+
+        // Build search criteria
+        PlanSearchCriteria criteria = PlanSearchCriteria.builder()
+                .planName(planName)
+                .planType(planType)
+                .minMonthlyCost(minMonthlyCost)
+                .maxMonthlyCost(maxMonthlyCost)
+                .minDataLimitGb(minDataLimitGb)
+                .maxDataLimitGb(maxDataLimitGb)
+                .isActive(isActive)
+                .build();
+
+        Page<PlanCatalogDto> result = planServiceImpl.searchPlans(criteria, pageable);
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @GetMapping("/type/{planType}")
